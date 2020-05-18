@@ -9,7 +9,8 @@ import (
 
 func main() {
 
-	code := qr.Code{}
+	code := qr.NewPaymentSend()
+	code.Amount = qr.AmountHUF(10)
 	code.ValidUntil = qr.Date(time.Now().Add(2 * time.Hour))
 
 	fmt.Println(code)
