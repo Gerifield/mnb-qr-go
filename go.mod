@@ -3,6 +3,6 @@ module github.com/gerifield/mnb-qr-go
 go 1.14
 
 require (
-	github.com/skip2/go-qrcode v0.0.0-20191027152451-9434209cb086
+	github.com/skip2/go-qrcode v0.0.0-20200519171959-a3b48390827e
 	github.com/stretchr/testify v1.5.1
 )

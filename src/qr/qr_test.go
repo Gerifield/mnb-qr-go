@@ -75,10 +75,10 @@ func TestGenerateQR(t *testing.T) {
 	c, err := NewPaymentSend("abcdefgh", "Test User", "HU00123456789012345678901234")
 	assert.NoError(t, err)
 
-	_, err = c.GenerateQR()
+	_, err = c.GeneratePNG(256)
 	assert.Equal(t, "negative validity period", err.Error())
 
-	c.ValidUntil(time.Now().Add(time.Hour))
-	_, err = c.GenerateQR()
+	_ = c.ValidUntil(time.Now().Add(time.Hour))
+	_, err = c.GeneratePNG(256)
 	assert.NoError(t, err)
 }

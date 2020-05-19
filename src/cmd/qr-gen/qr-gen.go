@@ -16,11 +16,12 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	_ = code.HUFAmount(10)
-	code.ValidUntil(time.Now().Add(2 * time.Hour))
+	_ = code.HUFAmount(5)
+	_ = code.ValidUntil(time.Now().Add(2 * time.Hour))
+	_ = code.Message("Hello!")
 
 	fmt.Println(code.String())
-	png, err := code.GeneratePNG()
+	png, err := code.GeneratePNG(256)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

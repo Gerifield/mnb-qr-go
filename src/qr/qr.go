@@ -18,15 +18,15 @@ type Code struct {
 	IBAN       string  // Required
 	Amount     amount
 	Valid      date // Required
-	Purpose    [4]byte
-	Message    [70]byte
-	ShopID     [35]byte
-	MerchDevID [35]byte
-	InvoiceID  [35]byte
-	CustomerID [35]byte
-	CredTranID [35]byte
-	LoyaltyID  [35]byte
-	NavCheckID [35]byte
+	purpose    string
+	message    string
+	shopID     string
+	merchDevID string
+	invoiceID  string
+	customerID string
+	credTranID string
+	loyaltyID  string
+	navCheckID string
 	//SeparatorLength [17]byte // Required, placeholder
 }
 
@@ -36,6 +36,9 @@ var (
 
 	// KindRTP for request money
 	KindRTP kind = "RTP"
+
+	// See the details in the checks, not all codes here maybe
+	purposeCodes = []string{"ACCT", "ADVA", "AGRT", "AIRB", "ALMY", "ANNI", "ANTS", "AREN", "BECH", "BENE", "BEXP", "BOCE", "BONU", "BUSB", "CASH", "CBFF", "CBTV", "CCRD", "CDBL", "CFEE", "CHAR", "CLPR", "CMDT", "COLL", "COMC", "COMM", "COMT", "COST", "CPYR", "CSDB", "CSLP", "CVCF", "DBTC", "DCRD", "DEPT", "DERI", "DIVD", "DMEQ", "DNTS", "ELEC", "ENRG", "ESTX", "FERB", "FREX", "GASB", "GDDS", "GDSV", "GOVI", "GOVT", "GSCB", "GVEA", "GVEB", "GVEC", "GVED", "HEDG", "HLRP", "HLTC", "HLTI", "HREC", "HSPC", "HSTX", "ICCP", "ICRF", "IDCP", "IHRP", "INPC", "INSM", "INSU", "INTC", "INTE", "INTX", "LBRI", "LICF", "LIFI", "LIMA", "LOAN", "LOAR", "LTCF", "MDCS", "MSVC", "NETT", "NITX", "NOWS", "NWCH", "NWCM", "OFEE", "OTHR", "OTLC", "PADD", "PAYR", "PENS", "PHON", "POPE", "PPTI", "PRCP", "PRME", "PTSP", "RCKE", "RCPT", "REFU", "RENT", "RINP", "RLWY", "ROYA", "SALA", "SAVG", "SCVE", "SECU", "SSBE", "STDY", "SUBS", "SUPP", "TAXS", "TELI", "TRAD", "TREA", "TRFD", "VATX", "VIEW", "WEBI", "WHLD", "WTER"}
 )
 
 // kind QR Code type
@@ -72,8 +75,8 @@ func (a amount) String() string {
 	return fmt.Sprintf("%s%d", currency, a.total)
 }
 
-func (c Code) GeneratePNG() ([]byte, error) {
-	if time.Now().After(time.Time(c.Valid)) {
+func (c Code) GeneratePNG(size int) ([]byte, error) {
+	if c.Valid.Expired() {
 		return nil, errors.New("negative validity period")
 	}
 	q, err := qrcode.New(c.String(), qrcode.Medium)
@@ -84,7 +87,7 @@ func (c Code) GeneratePNG() ([]byte, error) {
 	if q.VersionNumber > 13 { // TODO: add testing for this part
 		return nil, errors.New("generated image is too big")
 	}
-	return q.PNG(128)
+	return q.PNG(size)
 }
 
 // String .
@@ -119,37 +122,58 @@ func (c Code) String() string {
 	}
 	sb.WriteString("\n")
 
-	// TODO: This should be valid and be here
-	sb.WriteString(c.Valid.String())
+	if time.Time(c.Valid).Unix() == 0 {
+		// TODO: Add test for this part
+		// Add a default time with one hour expire
+		sb.WriteString(date(time.Now().Add(time.Hour)).String())
+	} else {
+		sb.WriteString(c.Valid.String())
+	}
 	sb.WriteString("\n")
 
-	// TODO: Fill these optional fields
-
-	//c.Purpose // AT-44
+	if c.purpose != "" {
+		sb.WriteString(c.purpose)
+	}
 	sb.WriteString("\n")
 
-	//c.Message
+	if c.message != "" {
+		sb.WriteString(c.message)
+	}
 	sb.WriteString("\n")
 
-	//c.ShopID
+	if c.shopID != "" {
+		sb.WriteString(c.shopID)
+	}
 	sb.WriteString("\n")
 
-	//c.MerchDevID
+	if c.merchDevID != "" {
+		sb.WriteString(c.merchDevID)
+	}
 	sb.WriteString("\n")
 
-	//c.InvoiceID
+	if c.invoiceID != "" {
+		sb.WriteString(c.invoiceID)
+	}
 	sb.WriteString("\n")
 
-	//c.CustomerID
+	if c.customerID != "" {
+		sb.WriteString(c.customerID)
+	}
 	sb.WriteString("\n")
 
-	//c.CredTranID
+	if c.credTranID != "" {
+		sb.WriteString(c.credTranID)
+	}
 	sb.WriteString("\n")
 
-	//c.LoyaltyID
+	if c.loyaltyID != "" {
+		sb.WriteString(c.loyaltyID)
+	}
 	sb.WriteString("\n")
 
-	//c.NavCheckID
+	if c.navCheckID != "" {
+		sb.WriteString(c.navCheckID)
+	}
 	sb.WriteString("\n")
 
 	return sb.String()
@@ -173,8 +197,108 @@ func (c *Code) HUFAmount(total int) error {
 }
 
 // ValidUntil .
-func (c *Code) ValidUntil(t time.Time) {
+func (c *Code) ValidUntil(t time.Time) error {
+	if time.Now().After(t) {
+		return errors.New("negative validity period")
+	}
 	c.Valid = date(t)
+	return nil
+}
+
+// Purpose for the transaction
+// Possible values are the AT-44 codes: https://www.rba.hr/documents/20182/183267/External+purpose+codes+list/8a28f888-1f83-5e29-d6ed-fce05f428689?version=1.1
+func (c *Code) Purpose(purpose string) error {
+	if len(purpose) != 4 {
+		return errors.New("purpose has invalid length")
+	}
+	purpose = strings.ToUpper(purpose)
+
+	found := false
+	for _, c := range purposeCodes {
+		if purpose == c {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return errors.New("invalid purpose code")
+	}
+
+	c.purpose = purpose
+	return nil
+}
+
+// Message .
+func (c *Code) Message(msg string) error {
+	if len(msg) > 70 {
+		return errors.New("message is too long")
+	}
+	c.message = msg
+	return nil
+}
+
+// ShopID .
+func (c *Code) ShopID(shopID string) error {
+	if len(shopID) > 35 {
+		return errors.New("shopID is too long")
+	}
+	c.shopID = shopID
+	return nil
+}
+
+// MerchDevID .
+func (c *Code) MerchDevID(merchDevID string) error {
+	if len(merchDevID) > 35 {
+		return errors.New("merchDevID is too long")
+	}
+	c.merchDevID = merchDevID
+	return nil
+}
+
+// InvoiceID .
+func (c *Code) InvoiceID(invoiceID string) error {
+	if len(invoiceID) > 35 {
+		return errors.New("invoiceID is too long")
+	}
+	c.invoiceID = invoiceID
+	return nil
+}
+
+// CustomerID .
+func (c *Code) CustomerID(customerID string) error {
+	if len(customerID) > 35 {
+		return errors.New("customerID is too long")
+	}
+	c.customerID = customerID
+	return nil
+}
+
+// CredTranID .
+func (c *Code) CredTranID(credTranID string) error {
+	if len(credTranID) > 35 {
+		return errors.New("credTranID is too long")
+	}
+	c.credTranID = credTranID
+	return nil
+}
+
+// LoyaltyID .
+func (c *Code) LoyaltyID(loyaltyID string) error {
+	if len(loyaltyID) > 35 {
+		return errors.New("loyaltyID is too long")
+	}
+	c.loyaltyID = loyaltyID
+	return nil
+}
+
+// NavCheckID .
+func (c *Code) NavCheckID(navCheckID string) error {
+	if len(navCheckID) > 35 {
+		return errors.New("navCheckID is too long")
+	}
+	c.navCheckID = navCheckID
+	return nil
 }
 
 // NewPaymentSend QR code creation

@@ -12,3 +12,12 @@ func (d date) String() string {
 	}
 	return formatted
 }
+
+// Expired return true if the code expired already
+func (d date) Expired() bool {
+	if time.Now().After(time.Time(d)) {
+		return true
+	}
+
+	return false
+}
