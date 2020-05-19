@@ -16,7 +16,7 @@ go get -u github.com/gerifield/mnb-qr-go/...
 
 Example usage:
 ```
-$ mnb-qr-gen -bic CIBHHUHB -name "Test Name" -iban HU90107001234567890123456789 -amount 5 -message "Hello!"
+$ mnb-qr-gen -bic CIBHHUHB -name "Test Name" -iban HU90107001234567890123456789 -amount 5 -message "Hello\!"
 RTP
 001
 1
