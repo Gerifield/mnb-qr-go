@@ -3,6 +3,7 @@ package qr
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -68,4 +69,16 @@ func TestCodeFormat(t *testing.T) {
 	assert.Equal(t, 17, strings.Count(output, "\n"), "has all (even empty) lines")
 	assert.False(t, strings.HasPrefix(output, "\n"), "does not start with new line")
 	assert.True(t, strings.HasSuffix(output, "\n"), "ends with new line")
+}
+
+func TestGenerateQR(t *testing.T) {
+	c, err := NewPaymentSend("abcdefgh", "Test User", "HU00123456789012345678901234")
+	assert.NoError(t, err)
+
+	_, err = c.GenerateQR()
+	assert.Equal(t, "negative validity period", err.Error())
+
+	c.ValidUntil(time.Now().Add(time.Hour))
+	_, err = c.GenerateQR()
+	assert.NoError(t, err)
 }

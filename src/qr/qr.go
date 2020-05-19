@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/skip2/go-qrcode"
 )
 
 type Code struct {
@@ -68,6 +70,17 @@ func (a amount) String() string {
 		currency = "HUF"
 	}
 	return fmt.Sprintf("%s%d", currency, a.total)
+}
+
+func (c Code) GeneratePNG() ([]byte, error) {
+	if time.Now().After(time.Time(c.Valid)) {
+		return nil, errors.New("negative validity period")
+	}
+	q, err := qrcode.New(c.String(), qrcode.Medium)
+	if err != nil {
+		return nil, err
+	}
+	return q.PNG(65)
 }
 
 // String .
