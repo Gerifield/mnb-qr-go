@@ -80,7 +80,11 @@ func (c Code) GeneratePNG() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return q.PNG(65)
+
+	if q.VersionNumber > 13 { // TODO: add testing for this part
+		return nil, errors.New("generated image is too big")
+	}
+	return q.PNG(128)
 }
 
 // String .
