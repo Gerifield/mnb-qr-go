@@ -1,52 +1,54 @@
 package qr
 
 import (
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 )
 
 type Code struct {
-	Kind            Kind     // Required
-	Version         Version  // Required
-	Charset         [1]byte  // Required
-	BIC             [11]byte // Required
-	Name            [70]byte // Required
-	IBAN            [28]byte // Required
-	Amount          Amount
-	ValidUntil      Date // Required
-	Purpose         [4]byte
-	Message         [70]byte
-	ShopID          [35]byte
-	MerchDevID      [35]byte
-	InvoiceID       [35]byte
-	CustomerID      [35]byte
-	CredTranID      [35]byte
-	LoyaltyID       [35]byte
-	NavCheckID      [35]byte
-	SeparatorLength [17]byte // Required
+	Kind       kind    // Required
+	Version    version // Required
+	Charset    int     // Required
+	BIC        string  // Required
+	Name       string  // Required
+	IBAN       string  // Required
+	Amount     amount
+	Valid      date // Required
+	Purpose    [4]byte
+	Message    [70]byte
+	ShopID     [35]byte
+	MerchDevID [35]byte
+	InvoiceID  [35]byte
+	CustomerID [35]byte
+	CredTranID [35]byte
+	LoyaltyID  [35]byte
+	NavCheckID [35]byte
+	//SeparatorLength [17]byte // Required, placeholder
 }
 
 var (
 	// KindHCT for send money
-	KindHCT Kind = "HCT"
+	KindHCT kind = "HCT"
 
 	// KindRTP for request money
-	KindRTP Kind = "RTP"
+	KindRTP kind = "RTP"
 )
 
-// Kind QR Code type
-type Kind string
+// kind QR Code type
+type kind string
 
 // String .
-func (k Kind) String() string {
+func (k kind) String() string {
 	return string(k)
 }
 
-// Version of the QR code
-type Version string
+// version of the QR code
+type version string
 
 // String .
-func (v Version) String() string {
+func (v version) String() string {
 	if v == "" {
 		return "001" // Default
 	}
@@ -54,22 +56,18 @@ func (v Version) String() string {
 }
 
 // Amount for payment (optional)
-type Amount struct {
+type amount struct {
 	currency string
 	total    int
 }
 
-// AmountHUF return a HUF value
-func AmountHUF(total int) Amount {
-	return Amount{
-		currency: "HUF",
-		total:    total,
-	}
-}
-
 // String .
-func (a Amount) String() string {
-	return fmt.Sprintf("%s%d", a.currency, a.total)
+func (a amount) String() string {
+	currency := a.currency
+	if currency == "" {
+		currency = "HUF"
+	}
+	return fmt.Sprintf("%s%d", currency, a.total)
 }
 
 // String .
@@ -82,20 +80,134 @@ func (c Code) String() string {
 	sb.WriteString(c.Version.String())
 	sb.WriteString("\n")
 
+	if c.Charset == 0 {
+		sb.WriteString("1") // Set default to 1
+	} else {
+		sb.WriteString(fmt.Sprintf("%d", c.Charset))
+	}
+	sb.WriteString("\n")
+
+	sb.WriteString(c.BIC)
+	sb.WriteString("\n")
+
+	sb.WriteString(c.Name)
+	sb.WriteString("\n")
+
+	sb.WriteString(c.IBAN)
+	sb.WriteString("\n")
+
+	// Optional amount
+	if c.Amount.total > 0 {
+		sb.WriteString(c.Amount.String())
+	}
+	sb.WriteString("\n")
+
+	// TODO: This should be valid and be here
+	sb.WriteString(c.Valid.String())
+	sb.WriteString("\n")
+
+	// TODO: Fill these optional fields
+
+	//c.Purpose // AT-44
+	sb.WriteString("\n")
+
+	//c.Message
+	sb.WriteString("\n")
+
+	//c.ShopID
+	sb.WriteString("\n")
+
+	//c.MerchDevID
+	sb.WriteString("\n")
+
+	//c.InvoiceID
+	sb.WriteString("\n")
+
+	//c.CustomerID
+	sb.WriteString("\n")
+
+	//c.CredTranID
+	sb.WriteString("\n")
+
+	//c.LoyaltyID
+	sb.WriteString("\n")
+
+	//c.NavCheckID
+	sb.WriteString("\n")
+
 	return sb.String()
 }
 
-// NewPaymentSend QR code creation
-func NewPaymentSend() Code {
-	return Code{
-		Kind: KindHCT,
-		//Version: "001",
+// HUFAmount for the transaction
+func (c *Code) HUFAmount(total int) error {
+	if total < 0 {
+		return errors.New("amount could not be negative")
 	}
+
+	if total > 999999999999 {
+		return errors.New("amount could not be higher than 999999999999")
+	}
+
+	c.Amount = amount{
+		currency: "HUF",
+		total:    total,
+	}
+	return nil
+}
+
+// ValidUntil .
+func (c *Code) ValidUntil(t time.Time) {
+	c.Valid = date(t)
+}
+
+// NewPaymentSend QR code creation
+// The reader of the QR code will send the payment to the generator user.
+// In Hungarian: Ez az átutalási megbízás, azaz a kedvezményezett generálja a QR
+// kódot, hogy a fizető fél a megfelelő adatokkal tudja elküdeni az összeget.
+func NewPaymentSend(bic string, name string, iban string) (*Code, error) {
+	c := &Code{
+		Kind: KindHCT,
+	}
+
+	if err := addRecipient(c, bic, name, iban); err != nil {
+		return nil, err
+	}
+	return c, nil
 }
 
 // NewPaymentRequest QR code creation
-func NewPaymentRequest() Code {
-	return Code{
+// The reader of the QR code will send a payment request to the generator user
+// In Hungarian: Ez a fizetési kérelem küldése, azaz a fizető fél adja meg a QR-kód generálásával
+// a főbb adatait a kedvezményezettnek, hogy az utóbbi fizetési kérelmet tudjon küldeni.
+func NewPaymentRequest(bic string, name string, iban string) (*Code, error) {
+	c := &Code{
 		Kind: KindRTP,
 	}
+
+	if err := addRecipient(c, bic, name, iban); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func addRecipient(code *Code, bic, name, iban string) error {
+	if len(bic) == 8 {
+		bic = bic + "XXX" // For SEPA payment the 8 char long SWIFT should be extended with XXX to 11 chars
+	}
+
+	if len(bic) != 11 {
+		return errors.New("invalid BIC length")
+	}
+	code.BIC = bic
+
+	if len(name) > 70 {
+		return errors.New("name should not be longer than 70")
+	}
+	code.Name = name
+
+	if len(iban) != 28 {
+		return errors.New("invalid IBAN length")
+	}
+	code.IBAN = iban
+	return nil
 }

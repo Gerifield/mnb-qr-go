@@ -13,13 +13,13 @@ const (
 
 func TestDateToString(t *testing.T) {
 	testTable := []struct {
-		input          Date
+		input          date
 		expectedOutput string
 	}{
-		{Date(time.Date(2020, 05, 18, 10, 11, 23, 0, time.UTC)), "20200518101123+0"},
-		{Date(time.Date(2020, 05, 18, 10, 11, 23, 0, time.FixedZone("testZone1", 2*oneHourSeconds))), "20200518101123+2"},
-		{Date(time.Date(2020, 05, 18, 10, 11, 23, 0, time.FixedZone("testZone2", -oneHourSeconds))), "20200518101123-1"},
-		{Date(time.Date(2020, 05, 18, 10, 11, 23, 0, time.FixedZone("testZone3", oneHourSeconds*11))), "20200518101123+11"},
+		{date(time.Date(2020, 05, 18, 10, 11, 23, 0, time.UTC)), "20200518101123+0"},
+		{date(time.Date(2020, 05, 18, 10, 11, 23, 0, time.FixedZone("testZone1", 2*oneHourSeconds))), "20200518101123+2"},
+		{date(time.Date(2020, 05, 18, 10, 11, 23, 0, time.FixedZone("testZone2", -oneHourSeconds))), "20200518101123-1"},
+		{date(time.Date(2020, 05, 18, 10, 11, 23, 0, time.FixedZone("testZone3", oneHourSeconds*11))), "20200518101123+11"},
 	}
 
 	for _, tt := range testTable {
