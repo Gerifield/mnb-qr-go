@@ -9,13 +9,13 @@ PDF:
 
 Install:
 ```
-$ go get -u https://github.com/gerifield/mnb-qr-go/...
+$ go get -u github.com/gerifield/mnb-qr-go/...
 ```
 
 
 Example usage:
 ```
-$ mnb-qr-go -bic CIBHHUHB -name "Test Name" -iban HU90107001234567890123456789 -amount 5
+$ mnb-qr-gen -bic CIBHHUHB -name "Test Name" -iban HU90107001234567890123456789 -amount 5
 RTP
 001
 1
