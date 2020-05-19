@@ -181,6 +181,8 @@ func (c *Code) ValidUntil(t time.Time) {
 // The reader of the QR code will send the payment to the generator user.
 // In Hungarian: Ez az átutalási megbízás, azaz a kedvezményezett generálja a QR
 // kódot, hogy a fizető fél a megfelelő adatokkal tudja elküdeni az összeget.
+// In Englis from the doc: If it supports the submission of the credit transfer order – i.e. the payee generates the QR code to
+// enable the payer to submit the credit transfer order with the correct data – the “HCT” code must be used.
 func NewPaymentSend(bic string, name string, iban string) (*Code, error) {
 	c := &Code{
 		Kind: KindHCT,
@@ -196,6 +198,8 @@ func NewPaymentSend(bic string, name string, iban string) (*Code, error) {
 // The reader of the QR code will send a payment request to the generator user
 // In Hungarian: Ez a fizetési kérelem küldése, azaz a fizető fél adja meg a QR-kód generálásával
 // a főbb adatait a kedvezményezettnek, hogy az utóbbi fizetési kérelmet tudjon küldeni.
+// In Englis from the doc: If it supports the transmission of the request to pay – i.e. the payer generates the QR code to transfer
+// his main data to the payee in order to enable the payee to send a request to pay – the RTP code must be used.
 func NewPaymentRequest(bic string, name string, iban string) (*Code, error) {
 	c := &Code{
 		Kind: KindRTP,
