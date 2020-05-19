@@ -1,22 +1,47 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/gerifield/mnb-qr-go/src/qr"
 )
 
 func main() {
+	bic := flag.String("bic", "", "BIC code")
+	name := flag.String("name", "", "Name")
+	iban := flag.String("iban", "", "IBAN number")
+	amount := flag.Int("amount", 0, "Amount to request (in HUF)")
 
-	code, err := qr.NewPaymentSend("GIBAHUHBXXX", "Test User", "HU00123456789012345678901234")
+	qrType := flag.String("type", "RTP", "QR code type (RTP/HCT)")
+	flag.Parse()
+
+	qrt := strings.ToUpper(*qrType)
+	if qrt != "RTP" && qrt != "HCT" {
+		fmt.Println("Invalid QR code type (shoulb be RTP or HCT)")
+		os.Exit(1)
+	}
+
+	var err error
+	var code *qr.Code
+	if qrt == "HCT" {
+		code, err = qr.NewPaymentSend(*bic, *name, *iban)
+	} else {
+		code, err = qr.NewPaymentRequest(*bic, *name, *iban)
+	}
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	_ = code.HUFAmount(5)
+	err = code.HUFAmount(*amount)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	_ = code.ValidUntil(time.Now().Add(2 * time.Hour))
 	_ = code.Message("Hello!")
 
