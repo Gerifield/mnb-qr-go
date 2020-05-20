@@ -75,6 +75,7 @@ func TestCodeFormatDetailed(t *testing.T) {
 	c, err := NewPaymentRequest("abcdefgh", "Test User", "HU00123456789012345678901234")
 	assert.NoError(t, err)
 
+	assert.NoError(t, c.HUFAmount(500))
 	assert.NoError(t, c.Purpose("AGRT"))
 	assert.NoError(t, c.Message("hello!"))
 	assert.NoError(t, c.ShopID("shopIDHere"))
@@ -95,7 +96,7 @@ func TestCodeFormatDetailed(t *testing.T) {
 	assert.Equal(t, "abcdefghXXX", output[3])
 	assert.Equal(t, "Test User", output[4])
 	assert.Equal(t, "HU00123456789012345678901234", output[5])
-	assert.Equal(t, "", output[6]) // Amount
+	assert.Equal(t, "HUF500", output[6]) // Amount
 
 	// Valid checks, trim timezone, parse and check with now, it was empty so it should be somewhere now+1
 	valid := strings.Split(output[7], "+")
