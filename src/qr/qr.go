@@ -122,7 +122,7 @@ func (c Code) String() string {
 	}
 	sb.WriteString("\n")
 
-	if time.Time(c.Valid).Unix() == 0 {
+	if time.Time(c.Valid).IsZero() {
 		// TODO: Add test for this part
 		// Add a default time with one hour expire
 		sb.WriteString(date(time.Now().Add(time.Hour)).String())

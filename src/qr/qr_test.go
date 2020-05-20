@@ -71,6 +71,63 @@ func TestCodeFormat(t *testing.T) {
 	assert.True(t, strings.HasSuffix(output, "\n"), "ends with new line")
 }
 
+func TestCodeFormatDetailed(t *testing.T) {
+	c, err := NewPaymentRequest("abcdefgh", "Test User", "HU00123456789012345678901234")
+	assert.NoError(t, err)
+
+	assert.NoError(t, c.Purpose("AGRT"))
+	assert.NoError(t, c.Message("hello!"))
+	assert.NoError(t, c.ShopID("shopIDHere"))
+	assert.NoError(t, c.MerchDevID("merchDevID"))
+	assert.NoError(t, c.InvoiceID("invoiceID"))
+	assert.NoError(t, c.CustomerID("cccustomer"))
+	assert.NoError(t, c.CredTranID("credTransID"))
+	assert.NoError(t, c.LoyaltyID("loyID"))
+	assert.NoError(t, c.NavCheckID("navhere"))
+
+	output := strings.Split(c.String(), "\n")
+	assert.Len(t, output, 18)
+
+	// Field checks
+	assert.Equal(t, KindRTP.String(), output[0])
+	assert.Equal(t, "001", output[1])
+	assert.Equal(t, "1", output[2])
+	assert.Equal(t, "abcdefghXXX", output[3])
+	assert.Equal(t, "Test User", output[4])
+	assert.Equal(t, "HU00123456789012345678901234", output[5])
+	assert.Equal(t, "", output[6]) // Amount
+
+	// Valid checks, trim timezone, parse and check with now, it was empty so it should be somewhere now+1
+	valid := strings.Split(output[7], "+")
+	assert.Len(t, valid, 2)
+	vt, err := time.Parse("20060102150405", valid[0])
+	assert.NoError(t, err)
+	assert.True(t, vt.After(time.Now()))
+
+	assert.Equal(t, "AGRT", output[8])         // Purpose
+	assert.Equal(t, "hello!", output[9])       // Message
+	assert.Equal(t, "shopIDHere", output[10])  // shopID
+	assert.Equal(t, "merchDevID", output[11])  // merchDevID
+	assert.Equal(t, "invoiceID", output[12])   // invoiceID
+	assert.Equal(t, "cccustomer", output[13])  // customerID
+	assert.Equal(t, "credTransID", output[14]) // credTranID
+	assert.Equal(t, "loyID", output[15])       // loyaltyID
+	assert.Equal(t, "navhere", output[16])     // navCheckID
+	assert.Equal(t, "", output[17])            // Empty line at the end
+}
+
+func TestCodeFormatDateCheck(t *testing.T) {
+	c, err := NewPaymentRequest("abcdefgh", "Test User", "HU00123456789012345678901234")
+	assert.NoError(t, err)
+
+	ts := time.Now().Add(4 * time.Hour).UTC()
+	assert.NoError(t, c.ValidUntil(ts))
+	output := strings.Split(c.String(), "\n")
+	assert.Len(t, output, 18)
+
+	assert.Equal(t, date(ts).String(), output[7])
+}
+
 func TestGenerateQR(t *testing.T) {
 	c, err := NewPaymentSend("abcdefgh", "Test User", "HU00123456789012345678901234")
 	assert.NoError(t, err)
