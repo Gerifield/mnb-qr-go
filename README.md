@@ -16,8 +16,45 @@ Install:
 go get -u github.com/gerifield/mnb-qr-go/...
 ```
 
+## Using the server
 
-Example usage:
+```
+$ go run src/cmd/qr-server/qr-server.go
+```
+
+Different terminal:
+```
+$ curl -X POST "http://127.0.0.1:8080" -d '{"pngSize":128,"kind":"RTP","bic":"abcdefghijk","name":"Test User","iban":"HU00123456789012345678901234","expire":360}' --output test.png
+$ open test.png
+```
+
+### Possible JSON fields (and types)
+
+Check the MNB docs for more details.
+
+Reqired:
+- `kind` - string (`RTP` or `HCT`)
+- `bic` - string (`8` or `11` character, the `8` char long will get a `XXX` postfix)
+- `name` - string (70 chars max, recipient or sender name)
+- `iban` - string (28 chars)
+- `expire` - int (seconds added to the current time)
+- `pngSize` - int (generated image size in pixels `128` or `256` should be fine)
+
+Optional:
+- `amount` - int (amount in HUF, optional)
+- `purpose` - string (4 char, from a fixed set, check the `purposeCodes` variable in the code)
+- `message` - string (70 chars max, message added to the code)
+- `shopID` - string (35 chars max)
+- `shopID` - string (35 chars max)
+- `merchDevID` - string (35 chars max)
+- `invoiceID` - string (35 chars max)
+- `customerID` - string (35 chars max)
+- `credTranID` - string (35 chars max)
+- `loyaltyID` - string (35 chars max)
+- `navCheckID` - string (35 chars max)
+
+
+## Command line tool usage
 ```
 $ mnb-qr-gen -bic CIBHHUHB -name "Test Name" -iban HU90107001234567890123456789 -amount 5 -message "Hello\!"
 RTP
