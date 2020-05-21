@@ -53,6 +53,22 @@ Optional:
 - `loyaltyID` - string (35 chars max)
 - `navCheckID` - string (35 chars max)
 
+### Build using docker
+
+```
+$ docker build -t mnb-qr-server .
+```
+
+It'll produce a container named `mnb-qr-server`. You could run it:
+```
+$ docker run -d -p8080:8080 mnb-qr-server
+```
+
+### Using the prebuild image
+
+```
+$ docker run -d -p8080:8080 docker.io/gerifield/mnb-qr-server:latest
+```
 
 ## Command line tool usage
 ```
