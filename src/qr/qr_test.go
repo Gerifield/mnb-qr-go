@@ -19,6 +19,16 @@ func TestHUFAmount(t *testing.T) {
 	assert.Equal(t, "amount could not be higher than 999999999999", c.HUFAmount(1234567890123).Error())
 }
 
+func TestPurpose(t *testing.T) {
+	c := &Code{}
+
+	assert.Equal(t, "purpose has invalid length", c.Purpose("a").Error())
+	assert.Equal(t, "invalid purpose code", c.Purpose("abcd").Error())
+	assert.NoError(t, c.Purpose("ACCT"))
+	assert.Equal(t, "ACCT", c.purpose)
+
+}
+
 func TestAddRecipientChecks(t *testing.T) {
 	testTable := []struct {
 		inputBIC    string
@@ -129,7 +139,7 @@ func TestCodeFormatDateCheck(t *testing.T) {
 	assert.Equal(t, date(ts).String(), output[7])
 }
 
-func TestGenerateQR(t *testing.T) {
+func TestGeneratePNG(t *testing.T) {
 	c, err := NewPaymentSend("abcdefgh", "Test User", "HU00123456789012345678901234")
 	assert.NoError(t, err)
 
@@ -139,4 +149,66 @@ func TestGenerateQR(t *testing.T) {
 	_ = c.ValidUntil(time.Now().Add(time.Hour))
 	_, err = c.GeneratePNG(256)
 	assert.NoError(t, err)
+
+	// Fill all the fields and gen again and try to hit the version error
+	c = genFullCode(t)
+	_, err = c.GeneratePNG(64)
+	assert.Equal(t, "qr content is too large", err.Error())
+
+	// Test the max size (generated size with full content: 483, so remove some fields here
+	c.navCheckID = ""   // -35
+	c.loyaltyID = ""    // -35
+	c.credTranID = ""   // -35
+	c.customerID = "12" // remaining -33
+
+	assert.Equal(t, qrContentMaxSize, len(c.String())) // This should be fine and check the qr after this
+	_, err = c.GeneratePNG(64)
+	assert.NoError(t, err)
+}
+
+func TestFullCode(t *testing.T) {
+	c := genFullCode(t)
+	genStr := c.String()
+	splitted := strings.Split(genStr, "\n")
+	assert.Equal(t, 3, len(splitted[0]))
+	assert.Equal(t, 3, len(splitted[1]))
+	assert.Equal(t, 1, len(splitted[2]))
+	assert.Equal(t, 11, len(splitted[3]))
+	assert.Equal(t, 70, len(splitted[4]))
+	assert.Equal(t, 28, len(splitted[5]))
+	assert.Equal(t, 15, len(splitted[6]))
+	assert.Equal(t, 16, len(splitted[7]))
+	assert.Equal(t, 4, len(splitted[8]))
+	assert.Equal(t, 70, len(splitted[9]))
+	assert.Equal(t, 35, len(splitted[10]))
+	assert.Equal(t, 35, len(splitted[11]))
+	assert.Equal(t, 35, len(splitted[12]))
+	assert.Equal(t, 35, len(splitted[13]))
+	assert.Equal(t, 35, len(splitted[14]))
+	assert.Equal(t, 35, len(splitted[15]))
+	assert.Equal(t, 35, len(splitted[16]))
+
+	assert.Equal(t, 0, len(splitted[17])) // Empty line at the end
+
+	assert.Equal(t, 483, len(genStr)) // The fully packed code's length, but the standard won't allow that
+}
+
+func genFullCode(t *testing.T) *Code {
+	c, err := NewPaymentSend("abcdefgh", strings.Repeat("a", 70), "HU00123456789012345678901234")
+	assert.NoError(t, err)
+
+	c.Version = version("111")
+	c.Charset = 2
+	assert.NoError(t, c.HUFAmount(999999999999))
+	assert.NoError(t, c.ValidUntil(time.Date(2120, 03, 30, 10, 11, 12, 0, time.FixedZone("testZone", 11))))
+	assert.NoError(t, c.Purpose("ACCT"))
+	assert.NoError(t, c.Message(strings.Repeat("b", 70)))
+	assert.NoError(t, c.ShopID(strings.Repeat("c", 35)))
+	assert.NoError(t, c.MerchDevID(strings.Repeat("d", 35)))
+	assert.NoError(t, c.InvoiceID(strings.Repeat("e", 35)))
+	assert.NoError(t, c.CustomerID(strings.Repeat("f", 35)))
+	assert.NoError(t, c.CredTranID(strings.Repeat("g", 35)))
+	assert.NoError(t, c.LoyaltyID(strings.Repeat("h", 35)))
+	assert.NoError(t, c.NavCheckID(strings.Repeat("i", 35)))
+	return c
 }

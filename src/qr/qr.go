@@ -30,6 +30,10 @@ type Code struct {
 	//SeparatorLength [17]byte // Required, placeholder
 }
 
+const (
+	qrContentMaxSize = 345
+)
+
 var (
 	// KindHCT for send money
 	KindHCT kind = "HCT"
@@ -79,13 +83,19 @@ func (c Code) GeneratePNG(size int) ([]byte, error) {
 	if c.Valid.Expired() {
 		return nil, errors.New("negative validity period")
 	}
-	q, err := qrcode.New(c.String(), qrcode.Medium)
+
+	qrContent := c.String()
+	if len(qrContent) > qrContentMaxSize {
+		return nil, errors.New("qr content is too large")
+	}
+
+	q, err := qrcode.New(qrContent, qrcode.Medium) // We should never hit this part
 	if err != nil {
 		return nil, err
 	}
 
-	if q.VersionNumber > 13 { // TODO: add testing for this part
-		return nil, errors.New("generated image is too big")
+	if q.VersionNumber > 13 { // This part should be unreachable
+		return nil, errors.New("generated image (version) is too high (content too big)")
 	}
 	return q.PNG(size)
 }
