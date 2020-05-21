@@ -139,6 +139,20 @@ func TestCodeFormatDateCheck(t *testing.T) {
 	assert.Equal(t, date(ts).String(), output[7])
 }
 
+func TestCodeSetErrors(t *testing.T) {
+	c := &Code{}
+
+	assert.Equal(t, "negative validity period", c.ValidUntil(time.Now().Add(-time.Minute)).Error())
+	assert.Equal(t, "message is too long", c.Message(strings.Repeat("a", 71)).Error())
+	assert.Equal(t, "shopID is too long", c.ShopID(strings.Repeat("a", 36)).Error())
+	assert.Equal(t, "merchDevID is too long", c.MerchDevID(strings.Repeat("a", 36)).Error())
+	assert.Equal(t, "invoiceID is too long", c.InvoiceID(strings.Repeat("a", 36)).Error())
+	assert.Equal(t, "customerID is too long", c.CustomerID(strings.Repeat("a", 36)).Error())
+	assert.Equal(t, "credTranID is too long", c.CredTranID(strings.Repeat("a", 36)).Error())
+	assert.Equal(t, "loyaltyID is too long", c.LoyaltyID(strings.Repeat("a", 36)).Error())
+	assert.Equal(t, "navCheckID is too long", c.NavCheckID(strings.Repeat("a", 36)).Error())
+}
+
 func TestGeneratePNG(t *testing.T) {
 	c, err := NewPaymentSend("abcdefgh", "Test User", "HU00123456789012345678901234")
 	assert.NoError(t, err)
