@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"encoding/json"
@@ -14,7 +14,14 @@ var (
 	errInvalidSize = errors.New("invalid PNG size")
 )
 
-func generateHandler(w http.ResponseWriter, r *http.Request) {
+type Srv struct {
+}
+
+func New() *Srv {
+	return &Srv{}
+}
+
+func (s *Srv) GenerateHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		sendError(w, http.StatusMethodNotAllowed, errors.New("invalid method"))
 		return
