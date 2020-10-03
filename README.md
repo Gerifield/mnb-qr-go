@@ -92,3 +92,15 @@ Hello!
 ```
 
 It'll generate an `out.png` and try to open it on the system.
+
+
+## Docker usage
+
+For this you only need a docker on your machine to build and run the server.
+Use the following commands, the first will build the binary (and run the tests) and the second will start the server
+and allow you to connect to it on your localhost's port 8080: 
+
+```
+$ docker build -t mnb-qr .
+$ docker run -p8080:8080 mnb-qr:latest
+```
