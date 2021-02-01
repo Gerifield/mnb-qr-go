@@ -104,3 +104,7 @@ and allow you to connect to it on your localhost's port 8080:
 $ docker build -t mnb-qr .
 $ docker run -p8080:8080 mnb-qr:latest
 ```
+
+# Development ideas:
+
+- It looks like the EPC standard QR looks very similar to this format, we could add support for that too! https://en.wikipedia.org/wiki/EPC_QR_code
