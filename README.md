@@ -107,4 +107,4 @@ $ docker run -p8080:8080 mnb-qr:latest
 
 # Development ideas:
 
-- It looks like the EPC standard QR looks very similar to this format, we could add support for that too! https://en.wikipedia.org/wiki/EPC_QR_code
+- It looks like the EPC standard QR looks very similar to this format, we could add support for that too! https://en.wikipedia.org/wiki/EPC_QR_code - https://www.europeanpaymentscouncil.eu/sites/default/files/kb/file/2018-05/EPC069-12%20v2.1%20Quick%20Response%20Code%20-%20Guidelines%20to%20Enable%20the%20Data%20Capture%20for%20the%20Initiation%20of%20a%20SCT.pdf
