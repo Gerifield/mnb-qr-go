@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"net/http/httptest"
 	"testing"
 
@@ -14,8 +15,8 @@ func TestGenErrorJSONWithNil(t *testing.T) {
 
 func TestSendError(t *testing.T) {
 	res := httptest.NewRecorder()
-	sendError(res, 1, nil)
+	sendError(res, 500, errors.New("test err"))
 
-	assert.Equal(t, 1, res.Code)
-	assert.Equal(t, `{"code":1,"error":""}`, res.Body.String())
+	assert.Equal(t, 500, res.Code)
+	assert.Equal(t, `{"code":500,"error":"test err"}`, res.Body.String())
 }
