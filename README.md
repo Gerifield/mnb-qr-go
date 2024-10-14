@@ -1,7 +1,6 @@
 # MNB QR code standard implementation in Go
 
-[![Build Status](https://travis-ci.org/Gerifield/mnb-qr-go.svg?branch=master)](https://travis-ci.org/Gerifield/mnb-qr-go)
-[![Coverage Status](https://coveralls.io/repos/github/Gerifield/mnb-qr-go/badge.svg?branch=master)](https://coveralls.io/github/Gerifield/mnb-qr-go?branch=master)
+[![Go](https://github.com/Gerifield/mnb-qr-go/actions/workflows/go.yml/badge.svg)](https://github.com/Gerifield/mnb-qr-go/actions/workflows/go.yml)
 
 Standard: https://www.mnb.hu/penzforgalom/azonnalifizetes/utmutatok
 
