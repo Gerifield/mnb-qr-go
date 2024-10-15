@@ -1,12 +1,15 @@
 package qr
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
-	"github.com/skip2/go-qrcode"
+	"github.com/yeqown/go-qrcode/v2"
+	"github.com/yeqown/go-qrcode/writer/standard"
 )
 
 type Code struct {
@@ -79,7 +82,8 @@ func (a amount) String() string {
 	return fmt.Sprintf("%s%d", currency, a.total)
 }
 
-func (c Code) GeneratePNG(size int) ([]byte, error) {
+// GeneratePNG .
+func (c *Code) GeneratePNG(size int) ([]byte, error) {
 	if c.Valid.Expired() {
 		return nil, errors.New("negative validity period")
 	}
@@ -89,19 +93,24 @@ func (c Code) GeneratePNG(size int) ([]byte, error) {
 		return nil, errors.New("qr content is too large")
 	}
 
-	q, err := qrcode.New(qrContent, qrcode.Medium) // We should never hit this part
+	q, err := qrcode.NewWith(qrContent, qrcode.WithErrorCorrectionLevel(qrcode.ErrorCorrectionMedium))
 	if err != nil {
 		return nil, err
 	}
 
-	if q.VersionNumber > 13 { // This part should be unreachable
+	if q.Dimension() > 65 {
 		return nil, errors.New("generated image (version) is too high (content too big)")
 	}
-	return q.PNG(size)
+
+	buf := bytes.NewBuffer(nil)
+	wr := standard.NewWithWriter(nopCloser{Writer: buf}, standard.WithQRWidth(uint8(size)))
+	err = q.Save(wr)
+
+	return buf.Bytes(), err
 }
 
 // String .
-func (c Code) String() string {
+func (c *Code) String() string {
 	var sb strings.Builder
 
 	sb.WriteString(c.Kind.String())
@@ -366,3 +375,9 @@ func addRecipient(code *Code, bic, name, iban string) error {
 	code.IBAN = iban
 	return nil
 }
+
+type nopCloser struct {
+	io.Writer
+}
+
+func (nopCloser) Close() error { return nil }
