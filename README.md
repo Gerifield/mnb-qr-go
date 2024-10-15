@@ -15,6 +15,10 @@ Install:
 go get -u github.com/gerifield/mnb-qr-go/...
 ```
 
+Sidenote:
+Since I started the project, there are newer tools and for the SEPA area there is this one: https://github.com/jovandeginste/payme
+This QR might work, but the Hungarian version is a bit customized.
+
 ## Using the server
 
 ```
