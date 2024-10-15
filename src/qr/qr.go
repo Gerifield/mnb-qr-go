@@ -93,13 +93,17 @@ func (c *Code) GeneratePNG(size int) ([]byte, error) {
 		return nil, errors.New("qr content is too large")
 	}
 
-	q, err := qrcode.NewWith(qrContent, qrcode.WithErrorCorrectionLevel(qrcode.ErrorCorrectionMedium))
+	q, err := qrcode.NewWith(qrContent,
+		//qrcode.WithEncodingMode(qrcode.EncModeByte),
+		qrcode.WithErrorCorrectionLevel(qrcode.ErrorCorrectionMedium))
+	//qrcode.WithVersion(13)) -> With the standard's allowed 345 char size it will be bigger than 13, it will be 14
+	// -> This is expected since the \n will trigger binary encoding which could be 331 in 13 and 362 in 14 version (with M error correction)
 	if err != nil {
 		return nil, err
 	}
 
-	if q.Dimension() > 65 {
-		return nil, errors.New("generated image (version) is too high (content too big)")
+	if q.Dimension() > 73 { // 65 should be the max (ver 13), but 73 (ver 14) is the final size due to the binary encoding
+		return nil, fmt.Errorf("generated QR code (width size) %d is too high (content too big)", q.Dimension())
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -142,7 +146,6 @@ func (c *Code) String() string {
 	sb.WriteString("\n")
 
 	if time.Time(c.Valid).IsZero() {
-		// TODO: Add test for this part
 		// Add a default time with one hour expire
 		sb.WriteString(date(time.Now().Add(time.Hour)).String())
 	} else {

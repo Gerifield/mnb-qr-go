@@ -1,6 +1,7 @@
 package qr
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -161,21 +162,24 @@ func TestGeneratePNG(t *testing.T) {
 	assert.Equal(t, "negative validity period", err.Error())
 
 	_ = c.ValidUntil(time.Now().Add(time.Hour))
+	fmt.Println(c.String(), len(c.String()))
 	_, err = c.GeneratePNG(256)
 	assert.NoError(t, err)
 
 	// Fill all the fields and gen again and try to hit the version error
 	c = genFullCode(t)
+	assert.Len(t, c.String(), 483) // All the fields has this size, but the standard only allow 345 chars, so not all optional fields at the same time
+
 	_, err = c.GeneratePNG(64)
 	assert.Equal(t, "qr content is too large", err.Error())
 
-	// Test the max size (generated size with full content: 483, so remove some fields here
-	c.navCheckID = ""   // -35
-	c.loyaltyID = ""    // -35
-	c.credTranID = ""   // -35
+	// Test the max size after removing some optional fields
+	c.shopID = ""       // remaining -35
+	c.merchDevID = ""   // remaining -35
+	c.invoiceID = ""    // remaining -35
 	c.customerID = "12" // remaining -33
 
-	assert.Equal(t, qrContentMaxSize, len(c.String())) // This should be fine and check the qr after this
+	assert.Len(t, c.String(), qrContentMaxSize) // This should be fine and check the qr after this
 	_, err = c.GeneratePNG(64)
 	assert.NoError(t, err)
 }
@@ -208,14 +212,14 @@ func TestFullCode(t *testing.T) {
 }
 
 func genFullCode(t *testing.T) *Code {
-	c, err := NewPaymentSend("abcdefgh", strings.Repeat("a", 70), "HU00123456789012345678901234")
+	c, err := NewPaymentSend(strings.Repeat("i", 11), strings.Repeat("a", 70), strings.Repeat("i", 28))
 	assert.NoError(t, err)
 
 	c.Version = version("111")
-	c.Charset = 2
-	assert.NoError(t, c.HUFAmount(999999999999))
+	c.Charset = 1
+	assert.NoError(t, c.HUFAmount(111111111111)) // HUF+12 char
 	assert.NoError(t, c.ValidUntil(time.Date(2120, 03, 30, 10, 11, 12, 0, time.FixedZone("testZone", 11))))
-	assert.NoError(t, c.Purpose("ACCT"))
+	assert.NoError(t, c.Purpose("ACCT")) // 4 char
 	assert.NoError(t, c.Message(strings.Repeat("b", 70)))
 	assert.NoError(t, c.ShopID(strings.Repeat("c", 35)))
 	assert.NoError(t, c.MerchDevID(strings.Repeat("d", 35)))
@@ -224,5 +228,6 @@ func genFullCode(t *testing.T) *Code {
 	assert.NoError(t, c.CredTranID(strings.Repeat("g", 35)))
 	assert.NoError(t, c.LoyaltyID(strings.Repeat("h", 35)))
 	assert.NoError(t, c.NavCheckID(strings.Repeat("i", 35)))
+
 	return c
 }
