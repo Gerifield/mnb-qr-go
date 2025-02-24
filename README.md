@@ -1,3 +1,7 @@
+# SINCE QVIK THIS QR DOESN'T WORK ANYMORE.
+
+
+
 # MNB QR code standard implementation in Go
 
 [![Go](https://github.com/Gerifield/mnb-qr-go/actions/workflows/go.yml/badge.svg)](https://github.com/Gerifield/mnb-qr-go/actions/workflows/go.yml)
